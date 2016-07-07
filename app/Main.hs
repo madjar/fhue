@@ -36,13 +36,16 @@ main = do (opts, hueAction) <-
                           "Open a shell"
                           (const runShell)
                           (pure ())
-
-          let hue = "https://hue-bigplay.bigdata.intraxa/"
-              user = "gdubus"
-          password <- fmap (dropEnd 1) -- Remove the trailing \n
-                           (readProcess "security" ["find-generic-password", "-w", "-s", "PassAXA"] "")
-          runHue hue user password hueAction
+          runMyHue hueAction
           --runFakeHdfsT hueAction [mkFile "README.rst", mkDir "group"]
+
+runMyHue hueAction = do
+  let hue = "https://hue-bigplay.bigdata.intraxa/"
+      user = "gdubus"
+  password <- fmap (dropEnd 1) -- Remove the trailing \n
+                   (readProcess "security" ["find-generic-password", "-w", "-s", "PassAXA"] "")
+  runHue hue user password hueAction
+
 
 --listAction :: String -> Hue ()
 listAction path = do items <- list path
