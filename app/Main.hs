@@ -1,10 +1,15 @@
+{-# LANGUAGE LambdaCase #-}
 module Main where
 
 import Options.Applicative.Simple hiding ((<>))
 import Text.PrettyPrint.Boxes
-import System.Process (readProcess)
+import System.Process (readProcess, readProcessWithExitCode)
 import Control.Monad.IO.Class
 import Data.List.Extra (dropEnd)
+import Text.Regex.TDFA
+import Control.Monad
+import System.Exit (ExitCode (..))
+import System.Console.Haskeline
 
 import FHue.Hue
 import FHue.Types
@@ -31,7 +36,12 @@ main = do (opts, hueAction) <-
             do addCommand "ls"
                           "List a directory"
                           listAction
-                          (strArgument (metavar "path"))
+                          (strArgument (metavar "PATH"))
+               addCommand "put"
+                          "Upload a file"
+                          (uncurry upload)
+                          ((,) <$> strArgument (metavar "FILE")
+                               <*> strArgument (metavar "DESTINATION"))
                addCommand "shell"
                           "Open a shell"
                           (const runShell)
@@ -41,12 +51,37 @@ main = do (opts, hueAction) <-
 
 runMyHue hueAction = do
   let hue = "https://hue-bigplay.bigdata.intraxa/"
-      user = "gdubus"
-  password <- fmap (dropEnd 1) -- Remove the trailing \n
-                   (readProcess "security" ["find-generic-password", "-w", "-s", "PassAXA"] "")
-  runHue hue user password hueAction
+  (login, password) <- getLogin hue >>= \case
+    Just result -> return result
+    Nothing -> askAndSetLogin hue
+  runHue hue login password hueAction
+    --`catch` \case LoginFailed -> askAndSetLogin hue >> runMyHue hueAction
 
+getLogin :: String -> IO (Maybe (String, String))
+getLogin root = do
+  (exitCode, out, err) <- readProcessWithExitCode "security" ["find-generic-password", "-g", "-s", root] ""
+  let loginRegex = "\"acct\"<blob>=\"(.*)\""
+      passwordRegex = "password: \"(.*)\""
+      -- TODO this is very ugly
+      [[_, login]] = out =~ loginRegex
+      [[_, password]] = err =~ passwordRegex
+  if exitCode == ExitSuccess
+    then return (Just (login, password))
+    else return Nothing
 
---listAction :: String -> Hue ()
+setLogin :: String -> String -> String -> IO ()
+setLogin root login password = do
+  void $ readProcessWithExitCode "security" ["add-generic-password", "-s", root] ""
+  void $ readProcess "security" ["add-generic-password", "-s", root, "-a", login, "-w", password] ""
+
+askAndSetLogin :: String -> IO (String, String)
+askAndSetLogin hue = runInputT defaultSettings $ do
+  Just login <- getInputLine "login: "
+  Just password <- getPassword (Just '*') "pass: "
+  liftIO (setLogin hue login password)
+  return (login, password)
+
+listAction :: String -> Hue ()
 listAction path = do items <- list path
                      liftIO $ printItems items
+

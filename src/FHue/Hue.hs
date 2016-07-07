@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue, upload) where
+module FHue.Hue (Hue, runHue, upload, HueException (..)) where
 
 import           Control.Lens
 import           Control.Monad.Reader
@@ -12,6 +12,9 @@ import           Network.Wreq.Extras                     (withSessionOpenSSL)
 import qualified Network.Wreq.Session                    as Sess
 import           Network.Wreq.Types                      (Postable)
 import           System.Console.Haskeline.MonadException
+import Data.List (isInfixOf)
+import Data.Typeable
+import Control.Exception
 
 import           FHue.Types
 
@@ -21,6 +24,10 @@ data HueConfig = HueConfig { hueAddress :: String
 newtype Hue a = Hue {
     runH :: ReaderT HueConfig IO a
   } deriving (Functor, Applicative, Monad, MonadIO, MonadReader HueConfig, MonadException)
+
+data HueException = LoginFailed deriving (Show, Typeable)
+
+instance Exception HueException
 
 
 -- | Lift a Wreq action to work on Hue
@@ -56,8 +63,9 @@ login :: String -> String -> Hue ()
 login username password = do
   r <- hGet "accounts/login/"
   -- TODO reuse cookie to save time
-  void $ hPost "accounts/login/" [ "username" := username
-                                             , "password" := password]
+  r <- hPost "accounts/login/" [ "username" := username, "password" := password]
+  when ("Error" `isInfixOf` (r ^. responseBody . to L.unpack))  -- TODO ugly
+    (throw LoginFailed)
 
 upload :: FilePath -> String -> Hue ()
 upload file destination = do
