@@ -1,12 +1,12 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue) where
+module FHue.Hue (Hue, runHue, upload) where
 
 import           Control.Lens
 import           Control.Monad.Reader
 import           Data.Aeson
 import           Data.Aeson.Lens
-import qualified Data.ByteString.Lazy                    as L
+import qualified Data.ByteString.Lazy.Char8              as L
 import           Network.Wreq
 import           Network.Wreq.Extras                     (withSessionOpenSSL)
 import qualified Network.Wreq.Session                    as Sess
@@ -42,8 +42,13 @@ hGet = liftWreq Sess.getWith defaults
 
 -- | Make a post request on Hue
 hPost :: Postable a => String -> a -> Hue (Response L.ByteString)
-hPost = hPostWith defaults
-
+hPost url payload = do
+  -- TODO keep csrf and referer between actions
+  r <- hGet "accounts/login/"
+  let csrftoken = r ^?! responseCookie "csrftoken" . cookieValue
+      options = defaults & header "X-CSRFToken" .~ [csrftoken]
+                         & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
+  hPostWith options url payload
 
 
 -- | Log the user in on Hue
@@ -51,12 +56,14 @@ login :: String -> String -> Hue ()
 login username password = do
   r <- hGet "accounts/login/"
   -- TODO reuse cookie to save time
-  let csrftoken = r ^?! responseCookie "csrftoken" . cookieValue
-      options = defaults & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
-  void $ hPostWith options "accounts/login/" [ "username" := username
-                                             , "password" := password
-                                             , "csrfmiddlewaretoken" := csrftoken]
+  void $ hPost "accounts/login/" [ "username" := username
+                                             , "password" := password]
 
+upload :: FilePath -> String -> Hue ()
+upload file destination = do
+  r <- hPost "/filebrowser/upload/file" [ partFileSource "hdfs_file" file
+                                        , partString "dest" destination]
+  liftIO $ L.putStrLn (r ^. responseBody)
 
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a
