@@ -40,6 +40,8 @@ library
                      , http-client-openssl
                      , HsOpenSSL
                      , data-default
+                     , http-types
+                     , text
   default-language:    Haskell2010
 
 executable fhue

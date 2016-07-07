@@ -15,6 +15,8 @@ import           System.Console.Haskeline.MonadException
 import Data.List (isInfixOf)
 import Data.Typeable
 import Control.Exception
+import Network.HTTP.Types.Status (statusIsSuccessful)
+import Data.Text (Text)
 
 import           FHue.Types
 
@@ -25,17 +27,20 @@ newtype Hue a = Hue {
     runH :: ReaderT HueConfig IO a
   } deriving (Functor, Applicative, Monad, MonadIO, MonadReader HueConfig, MonadException)
 
-data HueException = LoginFailed deriving (Show, Typeable)
+data HueException = LoginFailed | HueError Text deriving (Show, Typeable)
 
 instance Exception HueException
 
 
 -- | Lift a Wreq action to work on Hue
-liftWreq :: (Options -> Sess.Session -> String -> IO a) -> Options -> String -> Hue a
+liftWreq :: (Options -> Sess.Session -> String -> IO (Response L.ByteString)) -> Options -> String -> Hue (Response L.ByteString)
 liftWreq action opts url = do addr <- asks hueAddress
                               sess <- asks hueSession
-                              --let opts' = opts & proxy ?~ httpProxy "localhost" 8080
-                              liftIO $ action opts sess (addr ++ url)
+                              let opts' = opts & checkStatus ?~ (\_ _ _ -> Nothing)
+                              r <- liftIO $ action opts' sess (addr ++ url)
+                              if statusIsSuccessful (r ^. responseStatus)
+                                then return r
+                                else throw (HueError (r ^. responseBody . key "message" . _String))
 
 
 hPostWith :: Postable a => Options -> String -> a -> Hue (Response L.ByteString)
@@ -84,6 +89,6 @@ parse o = case fromJSON o of
             Error e -> error $ show o ++ "\n" ++ e
 
 instance MonadHdfs Hue where
-  list path = do r <- hGet ("filebrowser/view=" ++ path ++ "?format=json")
+  list path = do r <- hGet ("filebrowser/view=" ++ path ++ "?format=json") -- TODO use asJSON
                  let items = r ^.. responseBody . key "files" . values . to parse
                  return items
