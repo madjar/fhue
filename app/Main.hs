@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import Options.Applicative.Simple hiding ((<>))
@@ -10,6 +11,7 @@ import Text.Regex.TDFA
 import Control.Monad
 import System.Exit (ExitCode (..))
 import System.Console.Haskeline
+import Paths_fhue as Meta
 
 import FHue.Hue
 import FHue.Types
@@ -29,7 +31,7 @@ printItems is = printBox . hsep 2  center1 $ allCols
 
 main :: IO ()
 main = do (opts, hueAction) <-
-            simpleOptions "0.0.1"
+            simpleOptions $(simpleVersion Meta.version)
                           "FHue"
                           "A tool to interact with hdfs through Hue"
                           (pure ()) $
