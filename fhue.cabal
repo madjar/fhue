@@ -42,6 +42,12 @@ library
                      , data-default
                      , http-types
                      , text
+                     , conduit
+                     , conduit-extra
+                     , ascii-progress
+                     , http-conduit
+                     , resourcet
+
   default-language:    Haskell2010
 
 executable fhue
@@ -57,6 +63,7 @@ executable fhue
                      , extra
                      , regex-tdfa
                      , haskeline
+                     , concurrent-output
   other-modules:       Paths_fhue
   default-language:    Haskell2010
 

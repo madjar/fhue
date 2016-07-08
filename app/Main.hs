@@ -12,6 +12,7 @@ import Control.Monad
 import System.Exit (ExitCode (..))
 import System.Console.Haskeline
 import Paths_fhue as Meta
+import System.Console.Regions (displayConsoleRegions)
 
 import FHue.Hue
 import FHue.Types
@@ -56,7 +57,7 @@ runMyHue hueAction = do
   (login, password) <- getLogin hue >>= \case
     Just result -> return result
     Nothing -> askAndSetLogin hue
-  runHue hue login password hueAction
+  displayConsoleRegions $ runHue hue login password hueAction
     --`catch` \case LoginFailed -> askAndSetLogin hue >> runMyHue hueAction
 
 getLogin :: String -> IO (Maybe (String, String))

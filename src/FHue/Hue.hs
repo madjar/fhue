@@ -8,7 +8,7 @@ import           Data.Aeson
 import           Data.Aeson.Lens
 import qualified Data.ByteString.Lazy.Char8              as L
 import           Network.Wreq
-import           Network.Wreq.Extras                     (withSessionOpenSSL)
+import           Network.Wreq.Extras                     (withSessionOpenSSL, partFileWithProgress)
 import qualified Network.Wreq.Session                    as Sess
 import           Network.Wreq.Types                      (Postable)
 import           System.Console.Haskeline.MonadException
@@ -17,6 +17,7 @@ import Data.Typeable
 import Control.Exception
 import Network.HTTP.Types.Status (statusIsSuccessful)
 import Data.Text (Text)
+
 
 import           FHue.Types
 
@@ -74,7 +75,7 @@ login username password = do
 
 upload :: FilePath -> String -> Hue ()
 upload file destination = do
-  r <- hPost "/filebrowser/upload/file" [ partFileSource "hdfs_file" file
+  r <- hPost "/filebrowser/upload/file" [ partFileWithProgress "hdfs_file" file
                                         , partString "dest" destination]
   liftIO $ L.putStrLn (r ^. responseBody)
 
