@@ -1,0 +1,56 @@
+sudo: false
+language: c
+
+# Caching so the next build will be fast too.
+cache:
+  directories:
+  - $HOME/.stack
+
+addons:
+  apt:
+    sources:
+    - hvr-ghc
+    packages:
+    - ghc-7.10.2
+    - upx-ucl
+
+before_install:
+# Download and unpack the stack executable
+- mkdir -p ~/.local/bin
+- export PATH=/opt/ghc/7.10.2/bin:$HOME/.local/bin:$PATH
+- |
+  if [ `uname` = "Darwin" ]
+  then
+    travis_retry curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
+  else
+    travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+  fi
+
+install:
+  - stack --no-terminal --install-ghc build --only-dependencies
+
+script:
+  - stack --no-terminal --install-ghc build
+
+before_deploy:
+  - stack --no-terminal --install-ghc install
+  - upx -q -9 ~/.local/bin/fhue
+  - |
+    if [ `uname` = "Darwin" ]
+    then
+      export SUFFIX="mac"
+    else
+      export SUFFIX="linux"
+    fi
+  - mv ~/.local/bin/fhue ~/.local/bin/fhue-$SUFFIX
+
+deploy:
+  provider: releases
+  api_key:
+    secure: q71R+8WbqqXrVcZu9eGgXUVAAKqPF/qqCeOFZvMOPQN3jf9YghMKy2kNMJrVBv8IFLDk2rOhjiUuaKz8AjMYx94lq6jF41nPxyf4IYhnr3QH6YMq8bYlKlZyTMpAy197cQTm0lPXQLyJsx2xi14GioZPBzMlur1EV8zX5akIGwwI98Wa2vaodytelzkOCcXDktERtuh2cnhLyp4UAidsdvGEZfsMEkwaiIPs9sSUU8qWD+7QkPXrFqsidNnJS/wNnZ37gMGzbbBHVfnIQHTDAHUaZedbQ5UPdHykJJhkp+zs1w3uuBoLuyCtPmQxIhdZNdlEBOUjkxj451vl3aEa57Gc5ZeuPyneK7yYzMfsYkvPfB6thhV/H4lNUvJhHj45mXQwItWtX7l6HIDi7jvZnfYkC8lg/gMmPySSfMkESm7r7n+JSWIdO/bFoKOFVxg2mtQTYIYdFmAiUVr7DjHpJyguzA5sRRYqj0fgvrMWpfDMx1MavDX61F4UoeNs1ZFyhT1ZdErarOUDfhuSE4FcTgIrrFh10a/R/MTorPvJnOBrMpaHVGGORmJEmgBiK/+at9VjwPfuhqF+fqWaRC+JbKXTHTIMtQYXJlqb+BLSO4+61LWZnFQFoD0z79j8gfJacYnZRQ4nojFNd407vm3YUo5O2isYPALJk/PfW4+ie9Y=
+  file: "$HOME/.local/bin/fhue-$SUFFIX"
+  skip_cleanup: true
+  on:
+    repo: madjar/fhue
+    tags: on
+
