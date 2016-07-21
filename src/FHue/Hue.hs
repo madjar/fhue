@@ -58,6 +58,8 @@ hPost :: Postable a => String -> a -> Hue (Response L.ByteString)
 hPost url payload = do
   -- TODO keep csrf and referer between actions
   r <- hGet "accounts/login/"
+  _ <- hGet "filebrowser/view=/user/gdubus"
+
   let csrftoken = r ^?! responseCookie "csrftoken" . cookieValue
       options = defaults & header "X-CSRFToken" .~ [csrftoken]
                          & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
@@ -75,8 +77,11 @@ login username password = do
 
 upload :: FilePath -> String -> Hue ()
 upload file destination = do
-  r <- hPost "/filebrowser/upload/file" [ partFileWithProgress "hdfs_file" file
-                                        , partString "dest" destination]
+  -- We need the dest both in GET and POST, because hue use GET to determine
+  -- where to put the temporary file
+  let url = "/filebrowser/upload/file?dest=" ++ destination
+  r <- hPost url [ partFileWithProgress "hdfs_file" file
+                 , partString "dest" destination]
   liftIO $ L.putStrLn (r ^. responseBody)
 
 -- | Run hue with given server address, username and password (in that order)
