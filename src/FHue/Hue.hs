@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue, upload, HueException (..)) where
+module FHue.Hue (Hue, runHue, upload, download, HueException (..)) where
 
 import           Control.Lens
 import           Control.Monad.Reader
@@ -17,7 +17,7 @@ import Data.Typeable
 import Control.Exception
 import Network.HTTP.Types.Status (statusIsSuccessful)
 import Data.Text (Text)
-
+import System.FilePath (takeFileName, (</>))
 
 import           FHue.Types
 
@@ -41,6 +41,7 @@ liftWreq action opts url = do addr <- asks hueAddress
                               r <- liftIO $ action opts' sess (addr ++ url)
                               if statusIsSuccessful (r ^. responseStatus)
                                 then return r
+                                -- TODO 404 end up being empty HueError
                                 else throw (HueError (r ^. responseBody . key "message" . _String))
 
 
@@ -83,6 +84,17 @@ upload file destination = do
   r <- hPost url [ partFileWithProgress "hdfs_file" file
                  , partString "dest" destination]
   liftIO $ L.putStrLn (r ^. responseBody)
+
+download :: String -> FilePath -> Hue ()
+download source destDir = do
+  -- TODO loads the full file in memory, but doing otherwise would require a move to http-client
+  -- TODO take a destination filename, not dir
+  let url = "/filebrowser/download=" ++ source
+      fileName = takeFileName source
+      output = destDir </> fileName
+  r <- hGet url
+  liftIO $ L.writeFile output (r ^. responseBody)
+  liftIO $ putStrLn ("Downloaded " ++ fileName ++ " to " ++ destDir )
 
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a

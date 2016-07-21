@@ -6,6 +6,9 @@ This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 
 ## [Unreleased]
 
+### Added
+- A new `get` command to download files!
+
 ### Fixed
 - put: temporary file for upload is now in destination dir and not /tmp
 

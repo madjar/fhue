@@ -45,6 +45,11 @@ main = do (opts, hueAction) <-
                           (uncurry upload)
                           ((,) <$> strArgument (metavar "FILE")
                                <*> strArgument (metavar "DESTINATION"))
+               addCommand "get"
+                          "Download a file"
+                          (uncurry download)
+                          ((,) <$> strArgument (metavar "FILE")
+                               <*> strArgument (metavar "DESTINATION"))
                -- addCommand "shell"
                --            "Open a shell"
                --            (const runShell)
