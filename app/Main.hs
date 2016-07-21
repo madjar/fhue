@@ -45,10 +45,10 @@ main = do (opts, hueAction) <-
                           (uncurry upload)
                           ((,) <$> strArgument (metavar "FILE")
                                <*> strArgument (metavar "DESTINATION"))
-               addCommand "shell"
-                          "Open a shell"
-                          (const runShell)
-                          (pure ())
+               -- addCommand "shell"
+               --            "Open a shell"
+               --            (const runShell)
+               --            (pure ())
           runMyHue hueAction
           --runFakeHdfsT hueAction [mkFile "README.rst", mkDir "group"]
 
