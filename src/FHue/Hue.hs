@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue, upload, download, HueException (..)) where
+module FHue.Hue (Hue, runHue, upload, downloadToDir, HueException (..)) where
 
 import           Control.Lens
 import           Control.Monad.Reader
@@ -85,16 +85,18 @@ upload file destination = do
                  , partString "dest" destination]
   liftIO $ L.putStrLn (r ^. responseBody)
 
-download :: String -> FilePath -> Hue ()
-download source destDir = do
+downloadToFile :: String -> FilePath -> Hue ()
+downloadToFile source destination = do
   -- TODO loads the full file in memory, but doing otherwise would require a move to http-client
-  -- TODO take a destination filename, not dir
-  let url = "/filebrowser/download=" ++ source
-      fileName = takeFileName source
+  r <- hGet ("/filebrowser/download=" ++ source)
+  liftIO $ L.writeFile destination (r ^. responseBody)
+  liftIO $ putStrLn ("Downloaded to " ++ destination)
+
+downloadToDir :: String -> FilePath -> Hue ()
+downloadToDir source destDir = do
+  let fileName = takeFileName source
       output = destDir </> fileName
-  r <- hGet url
-  liftIO $ L.writeFile output (r ^. responseBody)
-  liftIO $ putStrLn ("Downloaded " ++ fileName ++ " to " ++ destDir )
+  downloadToFile source output
 
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a

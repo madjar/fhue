@@ -46,8 +46,8 @@ main = do (opts, hueAction) <-
                           ((,) <$> strArgument (metavar "FILE")
                                <*> strArgument (metavar "DESTINATION"))
                addCommand "get"
-                          "Download a file"
-                          (uncurry download)
+                          "Download a file to target directory"
+                          (uncurry downloadToDir)
                           ((,) <$> strArgument (metavar "FILE")
                                <*> strArgument (metavar "DESTINATION"))
                -- addCommand "shell"
