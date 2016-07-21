@@ -2,13 +2,8 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-#- location:
-#    git: git@github.com:vincenthz/hs-tls.git
-#    commit: 34afa9cc750e2a826792aef62e4ca8d334db178e
-#  subdirs:
-#  - core
 extra-deps: []
-resolver: lts-6.5
+resolver: lts-6.7
 
 extra-include-dirs:
 - /usr/local/opt/openssl/include
