@@ -13,6 +13,9 @@ This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 ### Changed
 - `ls` now displays up to 1000 items, and prints a warning if there are more
 
+### Fixed
+- It should now work for the rest of the world
+
 ## 0.1.1.1 [2016-07-22]
 
 ### Fixed

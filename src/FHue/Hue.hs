@@ -72,7 +72,6 @@ hPost :: Postable a => String -> a -> Hue (Response L.ByteString)
 hPost url payload = do
   -- TODO keep csrf and referer between actions
   r <- hGet "accounts/login/"
-  _ <- hGet "filebrowser/view=/user/gdubus"
 
   let csrftoken = r ^?! responseCookie "csrftoken" . cookieValue
       options = defaults & header "X-CSRFToken" .~ [csrftoken]
