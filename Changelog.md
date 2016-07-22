@@ -10,6 +10,9 @@ This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 - `rm` command (you know what is does).
 - `edit` command to edit a file on HDFS.
 
+### Changed
+- `ls` now displays up to 1000 items, and prints a warning if there are more
+
 ## 0.1.1.1 [2016-07-22]
 
 ### Fixed

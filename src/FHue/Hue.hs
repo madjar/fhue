@@ -87,6 +87,24 @@ login username password = do
   when ("Error" `isInfixOf` (r ^. responseBody . to L.unpack))  -- TODO ugly
     (throw LoginFailed)
 
+
+parse o = case fromJSON o of
+            Success x -> x
+            Error e -> error $ show o ++ "\n" ++ e
+
+lsDir :: String -> Hue [Item]
+lsDir path = do
+  r <- hGet ("filebrowser/view=" ++ path ++ "?format=json&pagesize=100") -- TODO use asJSON
+  when (hasManyPages r)
+    (liftIO $ putStrLn "Warning: we only show the first 1000 items.")
+  let items = r ^.. responseBody . key "files" . values . to parse
+  return items
+
+  where hasManyPages request = case request ^? responseBody . key "page" . key "num_pages" . _Integral of
+                                 Just n -> n > 1
+                                 Nothing -> False
+
+
 upload :: FilePath -> String -> Hue ()
 upload file destination = do
   -- We need the dest both in GET and POST, because hue use GET to determine
@@ -131,11 +149,5 @@ runHue addr username password hue = withSessionOpenSSL run
   where run sess = runReaderT (runH hueWithLogin) (HueConfig addr sess)
         hueWithLogin = login username password >> hue
 
-parse o = case fromJSON o of
-            Success x -> x
-            Error e -> error $ show o ++ "\n" ++ e
-
 instance MonadHdfs Hue where
-  list path = do r <- hGet ("filebrowser/view=" ++ path ++ "?format=json") -- TODO use asJSON
-                 let items = r ^.. responseBody . key "files" . values . to parse
-                 return items
+  list = lsDir
