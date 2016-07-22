@@ -54,6 +54,10 @@ main = do (opts, hueAction) <-
                           "Delete a file or directory"
                           remove
                           (strArgument (metavar "FILE"))
+               addCommand "edit"
+                          "Edit a file with your $EDITOR"
+                          edit
+                          (strArgument (metavar "FILE"))
                -- addCommand "shell"
                --            "Open a shell"
                --            (const runShell)

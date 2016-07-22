@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue, upload, downloadToDir, remove, HueException (..)) where
+module FHue.Hue (Hue, runHue, upload, downloadToDir, remove, edit, HueException (..)) where
 
 import           Control.Lens
 import           Control.Monad.Reader
@@ -17,7 +17,11 @@ import Data.Typeable
 import Control.Exception
 import Network.HTTP.Types.Status (statusIsSuccessful)
 import Data.Text (Text)
-import System.FilePath (takeFileName, (</>))
+import System.FilePath (takeFileName, takeDirectory, (</>))
+import System.IO.Extra (newTempDir)
+import System.Process (callProcess)
+import System.Environment (lookupEnv)
+import Data.Maybe (fromMaybe)
 
 import           FHue.Types
 
@@ -108,6 +112,18 @@ downloadToDir source destDir = do
 remove :: String -> Hue ()
 remove file = do
   void $ hPost "/filebrowser/rmtree" [ partString "path" file]
+
+edit :: String -> Hue ()
+edit file = do
+  (tmpDir, deleteTmpFile) <- liftIO $ newTempDir
+  let fileName = takeFileName file
+      tmpFile = tmpDir </> fileName
+  downloadToFile file tmpFile
+  editor <- liftIO $ fromMaybe "nano" <$> lookupEnv "EDITOR"
+  liftIO $ callProcess editor [tmpFile]
+  remove file
+  upload tmpFile (takeDirectory file)
+  liftIO $ deleteTmpFile
 
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a
