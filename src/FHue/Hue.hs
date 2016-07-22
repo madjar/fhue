@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module FHue.Hue (Hue, runHue, upload, downloadToDir, HueException (..)) where
+module FHue.Hue (Hue, runHue, upload, downloadToDir, remove, HueException (..)) where
 
 import           Control.Lens
 import           Control.Monad.Reader
@@ -104,6 +104,10 @@ downloadToDir source destDir = do
   let fileName = takeFileName source
       output = destDir </> fileName
   downloadToFile source output
+
+remove :: String -> Hue ()
+remove file = do
+  void $ hPost "/filebrowser/rmtree" [ partString "path" file]
 
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a

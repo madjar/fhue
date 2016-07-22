@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The changelog format adheres to [keepachangelog.com](http://keepachangelog.com/).
 This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 
+## [Unreleased]
+
+### Added
+- `rm` command (you know what is does).
+
 ## 0.1.1.1 [2016-07-22]
 
 ### Fixed

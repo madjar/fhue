@@ -50,6 +50,10 @@ main = do (opts, hueAction) <-
                           (uncurry downloadToDir)
                           ((,) <$> strArgument (metavar "FILE")
                                <*> strArgument (metavar "DESTINATION"))
+               addCommand "rm"
+                          "Delete a file or directory"
+                          remove
+                          (strArgument (metavar "FILE"))
                -- addCommand "shell"
                --            "Open a shell"
                --            (const runShell)
