@@ -28,7 +28,7 @@ newtype Hue a = Hue {
     runH :: ReaderT HueConfig IO a
   } deriving (Functor, Applicative, Monad, MonadIO, MonadReader HueConfig, MonadException)
 
-data HueException = LoginFailed | HueError Text deriving (Show, Typeable)
+data HueException = LoginFailed | HueError Status Text | HueFailure Status L.ByteString deriving (Show, Typeable)
 
 instance Exception HueException
 
@@ -39,10 +39,17 @@ liftWreq action opts url = do addr <- asks hueAddress
                               sess <- asks hueSession
                               let opts' = opts & checkStatus ?~ (\_ _ _ -> Nothing)
                               r <- liftIO $ action opts' sess (addr ++ url)
-                              if statusIsSuccessful (r ^. responseStatus)
+                              if statusIsSuccessful (r ^. responseStatus) && not (hasJsonError r)
                                 then return r
-                                -- TODO 404 end up being empty HueError
-                                else throw (HueError (r ^. responseBody . key "message" . _String))
+                                else throw (errorFor r)
+  where errorFor request = case request ^? responseBody . key "message" . _String of
+                             Just m -> HueError (request ^. responseStatus) m
+                             Nothing -> HueFailure (request ^. responseStatus) (request ^. responseBody)
+        hasJsonError request = case request ^? responseBody . key "status" . _Integral of
+                                 Just 0 -> False
+                                 Just _ -> True
+                                 Nothing -> False
+
 
 
 hPostWith :: Postable a => Options -> String -> a -> Hue (Response L.ByteString)
