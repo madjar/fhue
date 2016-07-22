@@ -1,7 +1,7 @@
-import Test.Tasty
-import Test.Tasty.HUnit
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
-import Shell
+import           Shell
 -- TODO try out hspec, and choose between pure hspec and hspec tasty
 
 --main = defaultMain tests

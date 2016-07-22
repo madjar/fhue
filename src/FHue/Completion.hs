@@ -1,13 +1,13 @@
 module FHue.Completion (ailCompletion) where
 
-import Control.Lens
-import Data.List
-import System.Console.Haskeline.Completion
-import System.FilePath
-import Control.Monad.Trans
+import           Control.Lens
+import           Control.Monad.Trans
+import           Data.List
+import           System.Console.Haskeline.Completion
+import           System.FilePath
 
-import FHue.Types
-import FHue.AilTypes
+import           FHue.AilTypes
+import           FHue.Types
 
 ailCompletion :: MonadHdfs m => CompletionFunc (Ail m)
 ailCompletion = completeWord (Just '\\') filenameWordBreakChars complete

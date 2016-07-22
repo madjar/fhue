@@ -4,22 +4,26 @@ module Network.Wreq.Extras
     , partFileWithProgress
     ) where
 
-import           Network.Wreq.Session    (Session, withSessionControl)
-import Network.HTTP.Client.OpenSSL
-import OpenSSL.Session (context)
-import Network.HTTP.Client (createCookieJar)
-import Network.HTTP.Client.MultipartFormData (Part, partFileRequestBodyM)
-import           Data.Conduit                 (ConduitM, await, yield)
-import System.Console.AsciiProgress
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as ByteString
-import Data.Text (Text)
-import System.IO (hFileSize, withBinaryFile, IOMode (ReadMode))
-import Network.HTTP.Conduit (requestBodySource)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Data.Conduit ((=$=))
-import Data.Conduit.Binary (sourceFile)
-import Control.Monad.Trans.Resource (runResourceT)
+import           Control.Monad.IO.Class                (MonadIO, liftIO)
+import           Control.Monad.Trans.Resource          (runResourceT)
+import           Data.ByteString                       (ByteString)
+import qualified Data.ByteString                       as ByteString
+import           Data.Conduit                          (ConduitM, await, yield)
+import           Data.Conduit                          ((=$=))
+import           Data.Conduit.Binary                   (sourceFile)
+import           Data.Text                             (Text)
+import           Network.HTTP.Client                   (createCookieJar)
+import           Network.HTTP.Client.MultipartFormData (Part,
+                                                        partFileRequestBodyM)
+import           Network.HTTP.Client.OpenSSL
+import           Network.HTTP.Conduit                  (requestBodySource)
+import           Network.Wreq.Session                  (Session,
+                                                        withSessionControl)
+import           OpenSSL.Session                       (context)
+import           System.Console.AsciiProgress
+import           System.IO                             (IOMode (ReadMode),
+                                                        hFileSize,
+                                                        withBinaryFile)
 
 withSessionOpenSSL :: (Session -> IO a) -> IO a
 withSessionOpenSSL = withOpenSSL . withSessionControl emptyCookieJar managerSettings

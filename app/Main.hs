@@ -1,23 +1,24 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
 
-import Options.Applicative.Simple hiding ((<>))
-import Text.PrettyPrint.Boxes
-import System.Process (readProcess, readProcessWithExitCode)
-import Control.Monad.IO.Class
-import Data.List.Extra (dropEnd)
-import Text.Regex.TDFA
-import Control.Monad
-import System.Exit (ExitCode (..))
-import System.Console.Haskeline
-import Paths_fhue as Meta
-import System.Console.Regions (displayConsoleRegions)
+import           Control.Monad
+import           Control.Monad.IO.Class
+import           Data.List.Extra            (dropEnd)
+import           Options.Applicative.Simple hiding ((<>))
+import           Paths_fhue                 as Meta
+import           System.Console.Haskeline
+import           System.Console.Regions     (displayConsoleRegions)
+import           System.Exit                (ExitCode (..))
+import           System.Process             (readProcess,
+                                             readProcessWithExitCode)
+import           Text.PrettyPrint.Boxes
+import           Text.Regex.TDFA
 
-import FHue.Hue
-import FHue.Types
-import FHue.Shell
-import FHue.FakeHdfs
+import           FHue.FakeHdfs
+import           FHue.Hue
+import           FHue.Shell
+import           FHue.Types
 
 printItems :: [Item] -> IO ()
 printItems is = printBox . hsep 2  center1 $ allCols

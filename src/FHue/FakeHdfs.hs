@@ -1,11 +1,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module FHue.FakeHdfs where
 
-import Data.Functor.Identity
-import Control.Monad.Reader
-import System.Console.Haskeline.MonadException
+import           Control.Monad.Reader
+import           Data.Functor.Identity
+import           System.Console.Haskeline.MonadException
 
-import FHue.Types
+import           FHue.Types
 
 -- TODO : use a tree, not a list
 newtype FakeHdfsT m a = FakeHdfsT {

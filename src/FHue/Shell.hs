@@ -1,19 +1,22 @@
-{-# LANGUAGE OverloadedStrings, FlexibleInstances,
-             MultiParamTypeClasses, UndecidableInstances, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE UndecidableInstances  #-}
 module FHue.Shell where
 
-import Control.Monad.Trans
-import Control.Monad.Trans.State.Strict hiding (state)
-import Data.List.Split
-import qualified Data.Map.Strict as M
-import Data.List.Extra (trim)
-import System.Console.Haskeline
-import System.FilePath
-import Control.Lens (use, uses, (.=))
+import           Control.Lens                     (use, uses, (.=))
+import           Control.Monad.Trans
+import           Control.Monad.Trans.State.Strict hiding (state)
+import           Data.List.Extra                  (trim)
+import           Data.List.Split
+import qualified Data.Map.Strict                  as M
+import           System.Console.Haskeline
+import           System.FilePath
 
-import FHue.Types (MonadHdfs, list)
-import FHue.Completion
-import FHue.AilTypes
+import           FHue.AilTypes
+import           FHue.Completion
+import           FHue.Types                       (MonadHdfs, list)
 
 runShell :: (MonadIO m, MonadException m, MonadHdfs m) => m ()
 runShell = do let initialState = AilState "/" mempty mempty

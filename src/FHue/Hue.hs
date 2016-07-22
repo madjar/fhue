@@ -2,26 +2,28 @@
 {-# LANGUAGE OverloadedStrings          #-}
 module FHue.Hue (Hue, runHue, upload, downloadToDir, remove, edit, HueException (..)) where
 
+import           Control.Exception
 import           Control.Lens
 import           Control.Monad.Reader
 import           Data.Aeson
 import           Data.Aeson.Lens
 import qualified Data.ByteString.Lazy.Char8              as L
+import           Data.List                               (isInfixOf)
+import           Data.Maybe                              (fromMaybe)
+import           Data.Text                               (Text)
+import           Data.Typeable
+import           Network.HTTP.Types.Status               (statusIsSuccessful)
 import           Network.Wreq
-import           Network.Wreq.Extras                     (withSessionOpenSSL, partFileWithProgress)
+import           Network.Wreq.Extras                     (partFileWithProgress,
+                                                          withSessionOpenSSL)
 import qualified Network.Wreq.Session                    as Sess
 import           Network.Wreq.Types                      (Postable)
 import           System.Console.Haskeline.MonadException
-import Data.List (isInfixOf)
-import Data.Typeable
-import Control.Exception
-import Network.HTTP.Types.Status (statusIsSuccessful)
-import Data.Text (Text)
-import System.FilePath (takeFileName, takeDirectory, (</>))
-import System.IO.Extra (newTempDir)
-import System.Process (callProcess)
-import System.Environment (lookupEnv)
-import Data.Maybe (fromMaybe)
+import           System.Environment                      (lookupEnv)
+import           System.FilePath                         (takeDirectory,
+                                                          takeFileName, (</>))
+import           System.IO.Extra                         (newTempDir)
+import           System.Process                          (callProcess)
 
 import           FHue.Types
 
