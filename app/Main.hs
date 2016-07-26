@@ -6,23 +6,11 @@ import           Control.Monad.IO.Class
 import           Options.Applicative.Simple hiding ((<>))
 import           Paths_fhue                 as Meta
 import           System.Console.Regions     (displayConsoleRegions)
-import           Text.PrettyPrint.Boxes
 
-import           System.Keychain
-
+import           FHue.Display
 import           FHue.Hue
 import           FHue.Types
-
-printItems :: [Item] -> IO ()
-printItems is = printBox . hsep 2  center1 $ allCols
-  where colFuncs = [ itemRwx
-                   , itemUser
-                   , itemGroup
-                   , show . itemSize
-                   , itemMtime
-                   , itemName ]
-        makeCol f = vcat right $ map (text . f) is
-        allCols =  map makeCol colFuncs
+import           System.Keychain
 
 main :: IO ()
 main = do (opts, hueAction) <-

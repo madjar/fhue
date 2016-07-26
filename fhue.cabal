@@ -21,6 +21,7 @@ library
                      , FHue.AilTypes
                      , FHue.Completion
                      , FHue.FakeHdfs
+                     , FHue.Display
                      , System.Keychain
   other-modules:       Network.Wreq.Extras
   build-depends:       base >= 4.7 && < 5
@@ -50,6 +51,7 @@ library
                      , resourcet
                      , process
                      , regex-tdfa
+                     , boxes
   default-language:    Haskell2010
 
 executable fhue
@@ -59,7 +61,6 @@ executable fhue
   build-depends:       base
                      , fhue
                      , optparse-simple
-                     , boxes
                      , transformers
                      , concurrent-output
   other-modules:       Paths_fhue
