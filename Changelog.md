@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The changelog format adheres to [keepachangelog.com](http://keepachangelog.com/).
 This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 
+## [Unreleased]
+
+### Added
+- Integration tests! Hopefully, that should mean no more regressions!
+
+### Changed
+- Make less requests by reusing the CSRF token accross requests. This should make FHue faster :)
+
 ## 0.1.2.0 [2016-07-22]
 
 ### Added

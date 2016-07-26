@@ -4,9 +4,10 @@ module FHue.Hue (Hue, runHue, upload, downloadToDir, remove, edit, HueException 
 
 import           Control.Exception
 import           Control.Lens
-import           Control.Monad.Reader
+import           Control.Monad.State.Strict
 import           Data.Aeson
 import           Data.Aeson.Lens
+import qualified Data.ByteString.Char8                   as B
 import qualified Data.ByteString.Lazy.Char8              as L
 import           Data.List                               (isInfixOf)
 import           Data.Maybe                              (fromMaybe)
@@ -27,12 +28,13 @@ import           System.Process                          (callProcess)
 
 import           FHue.Types
 
-data HueConfig = HueConfig { hueAddress :: String
-                           , hueSession :: Sess.Session}
+data HueConfig = HueConfig { hueAddress :: !String
+                           , hueSession :: !Sess.Session
+                           , hueCsrfToken :: !B.ByteString}
 
 newtype Hue a = Hue {
-    runH :: ReaderT HueConfig IO a
-  } deriving (Functor, Applicative, Monad, MonadIO, MonadReader HueConfig, MonadException)
+    runH :: StateT HueConfig IO a
+  } deriving (Functor, Applicative, Monad, MonadIO, MonadState HueConfig, MonadException)
 
 data HueException = LoginFailed | HueError Status Text | HueFailure Status L.ByteString deriving (Show, Typeable)
 
@@ -41,8 +43,8 @@ instance Exception HueException
 
 -- | Lift a Wreq action to work on Hue
 liftWreq :: (Options -> Sess.Session -> String -> IO (Response L.ByteString)) -> Options -> String -> Hue (Response L.ByteString)
-liftWreq action opts url = do addr <- asks hueAddress
-                              sess <- asks hueSession
+liftWreq action opts url = do addr <- gets hueAddress
+                              sess <- gets hueSession
                               let opts' = opts & checkStatus ?~ (\_ _ _ -> Nothing)
                               r <- liftIO $ action opts' sess (addr ++ url)
                               if statusIsSuccessful (r ^. responseStatus) && not (hasJsonError r)
@@ -64,26 +66,33 @@ hPostWith opts url payload = liftWreq (\o s u -> Sess.postWith o s u payload) op
 
 -- | Make a get request on Hue
 hGet :: String -> Hue (Response L.ByteString)
-hGet = liftWreq Sess.getWith defaults
+hGet url = updatingCsrfToken $ liftWreq Sess.getWith defaults url
+
+
+updatingCsrfToken :: Hue (Response a) -> Hue (Response a)
+updatingCsrfToken action = do
+  -- TODO I'm dumb, there is the cookie jar for that
+  r <- action
+  let token = r ^?! responseCookie "csrftoken" . cookieValue
+  modify (\s -> s { hueCsrfToken = token })
+  return r
 
 
 -- | Make a post request on Hue
 hPost :: Postable a => String -> a -> Hue (Response L.ByteString)
 hPost url payload = do
-  -- TODO keep csrf and referer between actions
-  r <- hGet "accounts/login/"
+  csrftoken <- gets hueCsrfToken
 
-  let csrftoken = r ^?! responseCookie "csrftoken" . cookieValue
-      options = defaults & header "X-CSRFToken" .~ [csrftoken]
+  let options = defaults & header "X-CSRFToken" .~ [csrftoken]
                          & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
-  hPostWith options url payload
+  updatingCsrfToken $ hPostWith options url payload
 
 
 -- | Log the user in on Hue
 login :: String -> String -> Hue ()
 login username password = do
-  r <- hGet "accounts/login/"
   -- TODO reuse cookie to save time
+  hGet "accounts/login/"  -- To get a first CSRF token
   r <- hPost "accounts/login/" [ "username" := username, "password" := password]
   when ("Error" `isInfixOf` (r ^. responseBody . to L.unpack))  -- TODO ugly
     (throw LoginFailed)
@@ -147,7 +156,7 @@ edit file = do
 -- | Run hue with given server address, username and password (in that order)
 runHue :: String -> String -> String -> Hue a -> IO a
 runHue addr username password hue = withSessionOpenSSL run
-  where run sess = runReaderT (runH hueWithLogin) (HueConfig addr sess)
+  where run sess = evalStateT (runH hueWithLogin) (HueConfig addr sess B.empty)
         hueWithLogin = login username password >> hue
 
 instance MonadHdfs Hue where
