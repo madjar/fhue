@@ -8,6 +8,9 @@ This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 
 ### Added
 - Integration tests! Hopefully, that should mean no more regressions!
+- All paths on HDFS can now be relative to `/user/USERNAME`.
+- `ls` can be called without arguments: it lists files in `/user/USERNAME`.
+- `put` can be called only with the file to upload: it will be uploaded to `/user/USERNAME`.
 
 ### Changed
 - Make less requests by reusing the CSRF token accross requests. This should make FHue faster :)
