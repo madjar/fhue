@@ -10,6 +10,7 @@ import           Data.Aeson.Lens
 import qualified Data.ByteString.Char8                   as B
 import qualified Data.ByteString.Lazy.Char8              as L
 import           Data.List                               (isInfixOf)
+import           Data.Monoid                             ((<>))
 import           Data.Text                               (Text)
 import           Data.Typeable
 import           Network.HTTP.Types.Status               (statusIsSuccessful)
@@ -95,10 +96,11 @@ hGet url = liftWreq Sess.getWith defaults url
 -- | Make a post request on Hue
 hPost :: Postable a => String -> a -> Hue (Response L.ByteString)
 hPost url payload = do
+  addr <- gets hueAddress
   csrftoken <- gets hueCsrfToken
 
   let options = defaults & header "X-CSRFToken" .~ [csrftoken]
-                         & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
+                         & header "Referer" .~ [B.pack addr <> "/accounts/login/"]
   hPostWith options url payload
 
 
