@@ -16,7 +16,7 @@ import           System.FilePath
 
 import           FHue.AilTypes
 import           FHue.Completion
-import           FHue.Types                       (MonadHdfs, list)
+import           FHue.Class                       (MonadHdfs, list)
 
 runShell :: (MonadIO m, MonadException m, MonadHdfs m) => m ()
 runShell = do let initialState = AilState "/" mempty mempty

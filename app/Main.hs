@@ -9,6 +9,7 @@ import           System.Console.Regions     (displayConsoleRegions)
 
 import           FHue.Display
 import           FHue.Hue
+import           FHue.Class
 import           FHue.Types
 import           System.Keychain
 

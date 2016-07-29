@@ -4,6 +4,7 @@ import           System.Environment (getEnv)
 import           System.FilePath    ((</>))
 import           System.IO.Extra    (withTempDir)
 
+import           FHue.Class
 import           FHue.Hue
 import           FHue.Types
 import           System.Keychain

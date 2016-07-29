@@ -30,6 +30,3 @@ instance FromJSON Item where
                                 stats .: "user" <*>
                                 stats .: "group"
     parseJSON _ = mempty
-
-class Monad m => MonadHdfs m where
-  list :: String -> m [Item]

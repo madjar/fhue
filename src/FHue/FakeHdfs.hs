@@ -6,6 +6,7 @@ import           Data.Functor.Identity
 import           System.Console.Haskeline.MonadException
 
 import           FHue.Types
+import           FHue.Class
 
 -- TODO : use a tree, not a list
 newtype FakeHdfsT m a = FakeHdfsT {
@@ -15,7 +16,10 @@ newtype FakeHdfsT m a = FakeHdfsT {
 -- deriving instance MonadException m => MonadException (FakeHdfsT m)
 
 instance Monad m => MonadHdfs (FakeHdfsT m) where
-  list path = FakeHdfsT ask -- TODO don't return everything, return what matches path
+  list _ = FakeHdfsT ask -- TODO don't return everything, return what matches path
+  upload = undefined
+  download = undefined
+  remove = undefined
 
 type FakeHdfs = FakeHdfsT Identity
 

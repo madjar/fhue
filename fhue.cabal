@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     FHue.Hue
                      , FHue.Types
+                     , FHue.Class
                      , FHue.Shell
                      , FHue.AilTypes
                      , FHue.Completion

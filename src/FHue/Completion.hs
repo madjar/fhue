@@ -8,6 +8,7 @@ import           System.FilePath
 
 import           FHue.AilTypes
 import           FHue.Types
+import           FHue.Class
 
 ailCompletion :: MonadHdfs m => CompletionFunc (Ail m)
 ailCompletion = completeWord (Just '\\') filenameWordBreakChars complete
