@@ -23,7 +23,7 @@ getLogin root = do
 
 setLogin :: String -> String -> String -> IO ()
 setLogin root login password = do
-  void $ readProcessWithExitCode "security" ["add-generic-password", "-s", root] ""
+  void $ readProcessWithExitCode "security" ["delete-generic-password", "-s", root] ""
   void $ readProcess "security" ["add-generic-password", "-s", root, "-a", login, "-w", password] ""
 
 askAndSetLogin :: String -> IO (String, String)

@@ -2,15 +2,16 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
 
+import           Control.Exception          (catch)
 import           Control.Monad.IO.Class
 import           Options.Applicative.Simple hiding ((<>))
 import           Paths_fhue                 as Meta
 import           System.Console.Regions     (displayConsoleRegions)
-import           System.FilePath        ((</>))
+import           System.FilePath            ((</>))
 
+import           FHue.Class
 import           FHue.Display
 import           FHue.Hue
-import           FHue.Class
 import           FHue.Types
 import           System.Keychain
 
@@ -57,7 +58,7 @@ runMyHue hueAction = do
     Nothing -> askAndSetLogin hue
   let userHome = "/user" </> login
   displayConsoleRegions $ runHue hue login password (hueAction userHome)
-    --`catch` \case LoginFailed -> askAndSetLogin hue >> runMyHue hueAction
+    `catch` \case LoginFailed -> askAndSetLogin hue >> runMyHue hueAction
 
 
 -- | Like '(</>)', but the second argument is an option
