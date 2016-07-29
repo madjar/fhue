@@ -28,9 +28,9 @@ import           System.Process                          (callProcess)
 
 import           FHue.Types
 
-data HueConfig = HueConfig { hueAddress :: !String
-                           , hueSession :: !Sess.Session
-                           , hueCsrfToken :: !B.ByteString}
+data HueConfig = HueConfig { hueAddress :: String
+                           , hueSession :: Sess.Session
+                           , hueCsrfToken :: B.ByteString}
 
 newtype Hue a = Hue {
     runH :: StateT HueConfig IO a
@@ -45,18 +45,26 @@ instance Exception HueException
 liftWreq :: (Options -> Sess.Session -> String -> IO (Response L.ByteString)) -> Options -> String -> Hue (Response L.ByteString)
 liftWreq action opts url = do addr <- gets hueAddress
                               sess <- gets hueSession
-                              let opts' = opts & checkStatus ?~ (\_ _ _ -> Nothing)
+                              let opts' = opts & checkStatus ?~ (\_ _ _ -> Nothing) -- Never throw an exception on http error
                               r <- liftIO $ action opts' sess (addr ++ url)
                               if statusIsSuccessful (r ^. responseStatus) && not (hasJsonError r)
-                                then return r
+                                then do updateCsrfToken r
+                                        return r
                                 else throw (errorFor r)
-  where errorFor request = case request ^? responseBody . key "message" . _String of
+  where errorFor :: Response L.ByteString -> HueException
+        errorFor request = case request ^? responseBody . key "message" . _String of
                              Just m -> HueError (request ^. responseStatus) m
                              Nothing -> HueFailure (request ^. responseStatus) (request ^. responseBody)
+
+        hasJsonError :: Response L.ByteString -> Bool
         hasJsonError request = case request ^? responseBody . key "status" . _Integral of
                                  Just 0 -> False
                                  Just _ -> True
                                  Nothing -> False
+
+        updateCsrfToken :: Response a -> Hue ()
+        updateCsrfToken response = let token = response ^?! responseCookie "csrftoken" . cookieValue
+                                   in modify (\s -> s { hueCsrfToken = token })
 
 
 
@@ -66,16 +74,7 @@ hPostWith opts url payload = liftWreq (\o s u -> Sess.postWith o s u payload) op
 
 -- | Make a get request on Hue
 hGet :: String -> Hue (Response L.ByteString)
-hGet url = updatingCsrfToken $ liftWreq Sess.getWith defaults url
-
-
-updatingCsrfToken :: Hue (Response a) -> Hue (Response a)
-updatingCsrfToken action = do
-  -- TODO I'm dumb, there is the cookie jar for that
-  r <- action
-  let token = r ^?! responseCookie "csrftoken" . cookieValue
-  modify (\s -> s { hueCsrfToken = token })
-  return r
+hGet url = liftWreq Sess.getWith defaults url
 
 
 -- | Make a post request on Hue
@@ -85,7 +84,7 @@ hPost url payload = do
 
   let options = defaults & header "X-CSRFToken" .~ [csrftoken]
                          & header "Referer" .~ ["https://hue-bigplay.bigdata.intraxa/accounts/login/"]
-  updatingCsrfToken $ hPostWith options url payload
+  hPostWith options url payload
 
 
 -- | Log the user in on Hue
