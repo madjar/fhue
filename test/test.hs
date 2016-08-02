@@ -1,8 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 import           Test.Hspec
 
-import           System.Environment (getEnv)
-import           System.FilePath    ((</>))
-import           System.IO.Extra    (withTempDir)
+import           Network.HTTP.Types.Status (status500)
+import           System.Environment        (getEnv)
+import           System.FilePath           ((</>))
+import           System.IO.Extra           (withTempDir)
 
 import           FHue.Class
 import           FHue.Hue
@@ -17,10 +19,17 @@ main = hspec $ do
 
   let hdfsHome = "/user" </> login
 
+  describe "all commands" $
+    it "make it clear that login failed" $
+      runHue hue "badlogin" "badpassword" (return ()) `shouldThrow` (== LoginFailed)
+
   describe "ls" $ do
     it "can list files in /" $ do
       dirs <- runIt $ list "/"
       map itemName dirs `shouldContain` ["user"]
+
+    it "provides a meaningful error on non-existing dir" $
+      runIt (list "/nonexisting/dir") `shouldThrow` (== HueError status500 "Cannot access: /nonexisting/dir. ")
 
   describe "put" $ do
     it "can upload a file" $ withTempDir $ \tmpDir -> do

@@ -31,7 +31,7 @@ newtype Hue a = Hue {
     runH :: StateT HueConfig IO a
   } deriving (Functor, Applicative, Monad, MonadIO, MonadState HueConfig, MonadException)
 
-data HueException = LoginFailed | HueError Status Text | HueFailure Status L.ByteString deriving (Show, Typeable)
+data HueException = LoginFailed | HueError Status Text | HueFailure Status L.ByteString deriving (Show, Eq, Typeable)
 
 instance Exception HueException
 
