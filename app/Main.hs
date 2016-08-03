@@ -4,9 +4,10 @@ module Main where
 
 import           Control.Exception          (catch)
 import           Control.Monad.IO.Class
-import           Options.Applicative.Simple hiding ((<>))
+import           Options.Applicative.Simple
 import           Paths_fhue                 as Meta
 import           System.Console.Regions     (displayConsoleRegions)
+import           System.Environment         (lookupEnv)
 import           System.FilePath            ((</>))
 
 import           FHue.Class
@@ -16,11 +17,19 @@ import           FHue.Types
 import           System.Keychain
 
 main :: IO ()
-main = do (opts, hueAction) <-
+main = do envUrl <- lookupEnv "FHUE_URL"
+          (fhueUrl, hueAction) <-
             simpleOptions $(simpleVersion Meta.version)
                           "FHue"
                           "A tool to interact with hdfs through Hue"
-                          (pure ()) $
+                          (strOption (long "url"
+                                   <> short 'u'
+                                   <> metavar "HUE_URL"
+                                   <> help "Url of the Hue server to talk to. Defaults to the FHUE_URL environment variable"
+                                   <> case envUrl of
+                                        Just url -> value url <> showDefault
+                                        Nothing -> mempty)
+                          ) $
             do addCommand "ls"
                           "List a directory"
                           (\path cur -> listAction (cur </?> path))
@@ -47,18 +56,17 @@ main = do (opts, hueAction) <-
                --            "Open a shell"
                --            (const runShell)
                --            (pure ())
-          runMyHue hueAction
+          runMyHue fhueUrl hueAction
           --runFakeHdfsT hueAction [mkFile "README.rst", mkDir "group"]
 
-runMyHue :: (String -> Hue a) -> IO a
-runMyHue hueAction = do
-  let hue = "https://hue-bigplay.bigdata.intraxa/"
-  (login, password) <- getLogin hue >>= \case
+runMyHue :: String -> (String -> Hue a) -> IO a
+runMyHue fhueUrl hueAction = do
+  (login, password) <- getLogin fhueUrl >>= \case
     Just result -> return result
-    Nothing -> askAndSetLogin hue
+    Nothing -> askAndSetLogin fhueUrl
   let userHome = "/user" </> login
-  displayConsoleRegions $ runHue hue login password (hueAction userHome)
-    `catch` \case LoginFailed -> askAndSetLogin hue >> runMyHue hueAction
+  displayConsoleRegions $ runHue fhueUrl login password (hueAction userHome)
+    `catch` \case LoginFailed -> askAndSetLogin fhueUrl >> runMyHue fhueUrl hueAction
 
 
 -- | Like '(</>)', but the second argument is an option

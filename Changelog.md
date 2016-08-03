@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The changelog format adheres to [keepachangelog.com](http://keepachangelog.com/).
 This project adheres to [Package Versioning Policy](http://pvp.haskell.org/).
 
+## [Unreleased]
+
+### Added
+- A new `--url` (or `-u`) option to specify the url of the Hue to talk to. The `FHUE_URL` environment variable can also be used for that.
+
 ## 0.1.3.0 [2016-08-01]
 
 ### Added
