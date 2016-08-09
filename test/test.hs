@@ -17,6 +17,9 @@ main = hspec $ do
   Just (login, password) <- runIO $ getLogin hue
   let runIt = runHue hue login password
 
+  -- Check that the saved login works
+  runIO $ runIt (return ())
+
   let hdfsHome = "/user" </> login
 
   describe "all commands" $
