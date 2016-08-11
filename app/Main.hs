@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
 
-import           Control.Exception          (catch)
+import           Control.Exception.Extra    (catchBool)
 import           Control.Monad.IO.Class
 import           Options.Applicative.Simple
 import           Paths_fhue                 as Meta
@@ -60,13 +60,14 @@ main = do envUrl <- lookupEnv "FHUE_URL"
           --runFakeHdfsT hueAction [mkFile "README.rst", mkDir "group"]
 
 runMyHue :: String -> (String -> Hue a) -> IO a
-runMyHue fhueUrl hueAction = do
+runMyHue fhueUrl hueAction = displayConsoleRegions $ do
   (login, password) <- getLogin fhueUrl >>= \case
     Just result -> return result
     Nothing -> askAndSetLogin fhueUrl
   let userHome = "/user" </> login
-  displayConsoleRegions $ runHue fhueUrl login password (hueAction userHome)
-    `catch` \case LoginFailed -> askAndSetLogin fhueUrl >> runMyHue fhueUrl hueAction
+  catchBool (== LoginFailed)
+            (runHue fhueUrl login password (hueAction userHome))
+            (\_ -> askAndSetLogin fhueUrl >> runMyHue fhueUrl hueAction)
 
 
 -- | Like '(</>)', but the second argument is an option
