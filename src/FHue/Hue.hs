@@ -84,7 +84,7 @@ login username password = do
   -- TODO reuse cookie to save time
   hGet "accounts/login/"  -- To get a first CSRF token
   r <- hPost "accounts/login/" [ "username" := username, "password" := password]
-  when ("Error" `isInfixOf` (r ^. responseBody . to L.unpack))  -- TODO ugly
+  when ("Error!" `isInfixOf` (r ^. responseBody . to L.unpack))  -- TODO ugly
     (throw LoginFailed)
 
 
